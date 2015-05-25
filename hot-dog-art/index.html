@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>hot dog art</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+
+		<script>
+
+			var container;
+
+			var camera, scene, renderer, elements = [];
+
+			init();
+			animate();
+
+      function hotdog(opt) {
+
+				var material = new THREE.MeshLambertMaterial({ color: 0xffff44 });
+
+        var sphere = new THREE.SphereGeometry(opt.radius, 20, 20);
+
+				var left = new THREE.Mesh(sphere, material);
+				scene.add(left);
+
+				var right = new THREE.Mesh(sphere, material);
+				scene.add(right);
+
+				var tube = new THREE.Mesh(new THREE.CylinderGeometry(opt.radius,opt.radius,opt.length,32), material);
+        tube.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+				scene.add(tube);
+
+        function setPosition(x, y) {
+
+          var yOffset = y * -10 + opt.yOffset;
+
+          left.position.set(-opt.length/2 + opt.xOffset, yOffset, 0);
+          right.position.set(opt.length/2 + opt.xOffset, yOffset, 0);
+          tube.position.set(opt.xOffset, yOffset, 0);
+        }
+
+        setPosition(0, 0);
+
+        elements.push({
+          setPosition: setPosition
+        })
+      }
+
+			function init() {
+
+				container = document.createElement('div');
+				document.body.appendChild(container);
+
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+				camera.position.x = 000;
+				camera.position.y = 000;
+				camera.position.z = 1000;
+
+				scene = new THREE.Scene();
+
+				var light, object;
+
+				scene.add(new THREE.AmbientLight(0x404040));
+
+				light = new THREE.DirectionalLight(0xffffff);
+				light.position.set(0, 1, 1);
+				scene.add(light);
+
+        light = new THREE.AmbientLight(0x404040); // soft white light
+        scene.add(light);
+
+				// hot dog
+        hotdog({length: 300, radius: 60, xOffset: -80, yOffset: 40});
+
+        // checkerboard
+
+        var texture = THREE.ImageUtils.loadTexture("texture/check.png");
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4);
+        texture.offset.set(0, 0);
+        material = new THREE.MeshBasicMaterial({ map: texture});
+
+        object = new THREE.Mesh(new THREE.BoxGeometry(500, 500, 1), material);
+        object.position.set(100, -50, -100);
+        scene.add(object);
+
+				//
+
+				renderer = new THREE.WebGLRenderer({ antialias: true });
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x66aaff);
+
+				container.appendChild(renderer.domElement);
+
+				//
+
+				window.addEventListener('resize', onWindowResize, false);
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize(window.innerWidth, window.innerHeight);
+
+			}
+
+      function onDocumentMouseMove(event) {
+
+				event.preventDefault();
+
+				var x = (event.clientX / window.innerWidth) * 2 - 1, 
+            y = (event.clientY / window.innerHeight) * 2 - 1;
+
+        camera.position.x = x * 100;
+        camera.position.y = y * 100;
+
+        elements.forEach(function(element) {
+          element.setPosition(x, y);
+        });
+
+				render();
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame(animate);
+
+				render();
+			}
+
+			function render() {
+
+				var timer = Date.now() * 0.0001;
+
+				camera.lookAt(scene.position);
+
+				renderer.render(scene, camera);
+			}
+
+		</script>
+
+	</body>
+</html>
